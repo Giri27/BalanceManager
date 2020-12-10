@@ -15,8 +15,6 @@ public class DatabaseConnection {
     private Connection connection;
     private Statement statement;
 
-    private String URL = "jdbc:postgresql://localhost:5432/balance_manager";
-
     /**
      * Create the Database Connection and Statement
      */
@@ -42,10 +40,23 @@ public class DatabaseConnection {
         return statement;
     }
 
+    /**
+     * Close the Database Connection and Statement
+     */
+    public void closeConnection() {
+        try {
+            statement.close();
+            connection.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
     private void setConnection() {
         try {
             Class.forName("org.postgresql.Driver");
 
+            String URL = "jdbc:postgresql://localhost:5432/balance_manager";
             connection = DriverManager.getConnection(URL, "postgres", "Rosita98!");
 
             setStatement();

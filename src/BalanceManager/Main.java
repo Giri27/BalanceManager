@@ -15,7 +15,7 @@ public class Main {
         Logger logger = Logger.getLogger(Main.class.getName());
         logger.info("Home window is opening...");
 
-        Home home = new Home("BalanceManager - Dashboard");
+        Home home = new Home("BalanceManager - Login");
         home.open();
 
     }

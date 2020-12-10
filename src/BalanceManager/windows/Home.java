@@ -82,6 +82,14 @@ public class Home extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Dispose this Window
+     */
+    public void close() {
+        LOGGER.info("Closing Home Window...");
+        dispose();
+    }
+
     private void initDatabase() {
 
         LOGGER.info("Conneting to database...");
@@ -188,8 +196,18 @@ public class Home extends JFrame {
                     dbPassword = set.getString("password");
                 }
 
-                if(dbEmail.equals(email) && dbPassword.equals(password))
-                    System.out.println("Login");
+                if (dbEmail.equals(email) && dbPassword.equals(password)) {
+
+                    databaseConnection.closeConnection();
+
+                    Dashboard dashboard = new Dashboard("BalanceManager - Dashboard");
+                    dashboard.open();
+
+                    close();
+                } else
+                    JOptionPane.showMessageDialog(null, "Email and Password" +
+                                    "are wrong or not registered!", "Login error",
+                            JOptionPane.ERROR_MESSAGE, null);
 
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
