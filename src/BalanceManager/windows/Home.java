@@ -185,22 +185,24 @@ public class Home extends JFrame {
             Statement statement = databaseConnection.getStatement();
 
             try {
-                ResultSet set = statement.executeQuery("SELECT email, password FROM public.users " +
+                ResultSet set = statement.executeQuery("SELECT * FROM public.users " +
                         "WHERE email = '" + email + "';");
 
                 String dbEmail = "";
                 String dbPassword = "";
+                String dbUsername = "";
 
                 while (set.next()) {
                     dbEmail = set.getString("email");
                     dbPassword = set.getString("password");
+                    dbUsername = set.getString("username");
                 }
 
                 if (dbEmail.equals(email) && dbPassword.equals(password)) {
 
                     databaseConnection.closeConnection();
 
-                    Dashboard dashboard = new Dashboard("BalanceManager - Dashboard");
+                    Dashboard dashboard = new Dashboard("BalanceManager - Dashboard", dbUsername);
                     dashboard.open();
 
                     close();
@@ -221,11 +223,13 @@ public class Home extends JFrame {
             JTextField email = new JTextField();
             JPasswordField password = new JPasswordField();
             JPasswordField checkPassword = new JPasswordField();
+            JTextField username = new JTextField();
 
             final JComponent[] inputs = new JComponent[]{
                     new JLabel("Email"), email,
                     new JLabel("Password"), password,
-                    new JLabel("Confirm Password"), checkPassword
+                    new JLabel("Confirm Password"), checkPassword,
+                    new JLabel("Username"), username
             };
 
             int result = JOptionPane.showConfirmDialog(null, inputs,
@@ -236,9 +240,11 @@ public class Home extends JFrame {
 
             if (result == JOptionPane.OK_OPTION && !email.getText().isEmpty()
                     && email.getText().contains("@") && !pass.isEmpty()
-                    && !checkPass.isEmpty() && pass.equals(checkPass)) {
+                    && !checkPass.isEmpty() && pass.equals(checkPass)
+                    && !username.getText().isEmpty()) {
 
-                String sqlQuery = "INSERT INTO public.users (email, password) VALUES (?, ?);";
+                String sqlQuery = "INSERT INTO public.users (email, password, username)" +
+                        "VALUES (?, ?, ?);";
                 try {
 
                     PreparedStatement preparedStatement = databaseConnection.getConnection()
@@ -247,6 +253,7 @@ public class Home extends JFrame {
 
                     preparedStatement.setString(1, email.getText());
                     preparedStatement.setString(2, new String(password.getPassword()));
+                    preparedStatement.setString(3, username.getText());
 
                     int response = preparedStatement.executeUpdate();
 

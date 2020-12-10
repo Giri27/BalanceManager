@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 /**
@@ -18,6 +19,8 @@ public class Dashboard extends JFrame {
     private final int WIDTH = 1280;
     private final int HEIGHT = WIDTH / 16 * 9;
 
+    private final String USERNAME;
+
     private final Logger LOGGER;
 
     private DatabaseConnection databaseConnection;
@@ -29,8 +32,10 @@ public class Dashboard extends JFrame {
      *
      * @param title window title
      */
-    public Dashboard(String title) {
+    public Dashboard(String title, String username) {
         super(title);
+
+        USERNAME = username;
 
         LOGGER = Logger.getLogger(Dashboard.class.getName());
 
@@ -77,13 +82,6 @@ public class Dashboard extends JFrame {
         setVisible(true);
     }
 
-    /**
-     * Dispose this Window
-     */
-    public void close() {
-        dispose();
-    }
-
     private void initDatabase() {
 
         LOGGER.info("Conneting to database...");
@@ -94,5 +92,25 @@ public class Dashboard extends JFrame {
 
     private void init() {
 
+        // Sql Schema setup
+
+        String sqlQuery = "CREATE SCHEMA IF NOT EXISTS " + USERNAME;
+
+        try {
+
+            int response = databaseConnection.getStatement().executeUpdate(sqlQuery);
+
+            if (response != 0)
+                LOGGER.severe("Creation of schema '" + USERNAME + "' failed!");
+
+            // TODO Create Earnings table and Outgoings table
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        CONTAINER.setLayout(new FlowLayout());
+
+        // TODO Setup the layout with panels for Earnings and Outgoings
     }
 }
