@@ -220,6 +220,7 @@ public class Home extends JFrame {
         registerBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         registerBtn.addActionListener(e -> {
+
             JTextField email = new JTextField();
             JPasswordField password = new JPasswordField();
             JPasswordField checkPassword = new JPasswordField();
