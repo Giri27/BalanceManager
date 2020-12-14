@@ -2,15 +2,19 @@ package BalanceManager.windows;
 
 import BalanceManager.component.CustomPanel;
 import BalanceManager.utils.DatabaseConnection;
+import org.jdatepicker.JDatePicker;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.logging.Logger;
 
 /**
@@ -113,7 +117,8 @@ public class Dashboard extends JFrame {
             sqlQuery = "CREATE TABLE IF NOT EXISTS " + USERNAME + ".earnings(" +
                     "id serial PRIMARY KEY," +
                     "description text DEFAULT 'Entrata'," +
-                    "amount float NOT NULL);";
+                    "amount float NOT NULL," +
+                    "date DATE NOT NULL);";
 
             response = databaseConnection.getStatement().executeUpdate(sqlQuery);
 
@@ -123,7 +128,8 @@ public class Dashboard extends JFrame {
             sqlQuery = "CREATE TABLE IF NOT EXISTS " + USERNAME + ".outgoings(" +
                     "id serial PRIMARY KEY," +
                     "description text DEFAULT 'Uscita'," +
-                    "amount float NOT NULL);";
+                    "amount float NOT NULL," +
+                    "date DATE NOT NULL);";
 
             response = databaseConnection.getStatement().executeUpdate(sqlQuery);
 
@@ -143,7 +149,7 @@ public class Dashboard extends JFrame {
         CONTAINER.add(getBalancePanel());
     }
 
-    // TODO Center the Labels, add Buttons for each function
+    // TODO Center the Labels, add Buttons for movements
     private JPanel getEarningsPanel() {
 
         try {
@@ -179,9 +185,11 @@ public class Dashboard extends JFrame {
         addEarnings.addActionListener(e -> {
 
             JTextField amount = new JTextField("0.00");
+            JDatePicker datePicker = new JDatePicker();
 
             final JComponent[] inputs = new JComponent[]{
-                    new JLabel("Email"), amount
+                    new JLabel("Amount: "), amount,
+                    datePicker
             };
 
             int result = JOptionPane.showConfirmDialog(null, inputs,
@@ -189,15 +197,25 @@ public class Dashboard extends JFrame {
 
             if (result == JOptionPane.OK_OPTION && !amount.getText().isEmpty()) {
 
-                String sqlQuery = "INSERT INTO " + USERNAME + ".earnings (amount)" +
-                        "VALUES (?);";
+                String sqlQuery = "INSERT INTO " + USERNAME + ".earnings (amount, date)" +
+                        "VALUES (?, ?);";
                 try {
+
+                    int day = datePicker.getModel().getDay();
+                    int month = datePicker.getModel().getMonth() + 1;
+                    int year = datePicker.getModel().getYear();
+
+                    String dateTxt = day + "/" + month + "/" + year;
+
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    Date date = new Date(dateFormat.parse(dateTxt).getTime());
 
                     PreparedStatement preparedStatement = databaseConnection.getConnection()
                             .prepareStatement(sqlQuery);
                     preparedStatement.clearParameters();
 
                     preparedStatement.setFloat(1, Float.parseFloat(amount.getText()));
+                    preparedStatement.setDate(2, date);
 
                     int response = preparedStatement.executeUpdate();
 
@@ -205,7 +223,7 @@ public class Dashboard extends JFrame {
                             "Earnings added" + response, "Add Earnings",
                             JOptionPane.INFORMATION_MESSAGE, null);
 
-                } catch (SQLException throwables) {
+                } catch (SQLException | ParseException throwables) {
                     throwables.printStackTrace();
                 }
 
@@ -253,8 +271,61 @@ public class Dashboard extends JFrame {
         amountLbl.setForeground(Color.WHITE);
         amountLbl.setBorder(new EmptyBorder(0, 170, 0, 0));
 
+        JButton addOutgoings = new JButton("Add outgoings");
+        addOutgoings.addActionListener(e -> {
+
+            JTextField amount = new JTextField("0.00");
+            JDatePicker datePicker = new JDatePicker();
+
+            final JComponent[] inputs = new JComponent[]{
+                    new JLabel("Amount: "), amount,
+                    datePicker
+            };
+
+            int result = JOptionPane.showConfirmDialog(null, inputs,
+                    "Add Outgoings", JOptionPane.DEFAULT_OPTION);
+
+            if (result == JOptionPane.OK_OPTION && !amount.getText().isEmpty()) {
+
+                String sqlQuery = "INSERT INTO " + USERNAME + ".outgoings (amount, date)" +
+                        "VALUES (?, ?);";
+                try {
+
+                    int day = datePicker.getModel().getDay();
+                    int month = datePicker.getModel().getMonth() + 1;
+                    int year = datePicker.getModel().getYear();
+
+                    String dateTxt = day + "/" + month + "/" + year;
+
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                    Date date = new Date(dateFormat.parse(dateTxt).getTime());
+
+                    PreparedStatement preparedStatement = databaseConnection.getConnection()
+                            .prepareStatement(sqlQuery);
+                    preparedStatement.clearParameters();
+
+                    preparedStatement.setFloat(1, Float.parseFloat(amount.getText()));
+                    preparedStatement.setDate(2, date);
+
+                    int response = preparedStatement.executeUpdate();
+
+                    JOptionPane.showMessageDialog(null,
+                            "Outoing added" + response, "Add Outgoings",
+                            JOptionPane.INFORMATION_MESSAGE, null);
+
+                } catch (SQLException | ParseException throwables) {
+                    throwables.printStackTrace();
+                }
+
+            } else {
+                System.out.println("User canceled / closed the dialog, result = " + result);
+            }
+
+        });
+
         panel.add(outgoingsLbl);
         panel.add(amountLbl);
+        panel.add(addOutgoings);
 
         return panel;
     }
@@ -278,6 +349,12 @@ public class Dashboard extends JFrame {
                 "</html>");
         amountLbl.setForeground(Color.WHITE);
         amountLbl.setBorder(new EmptyBorder(0, 170, 0, 0));
+
+        JButton retriveMovements = new JButton("Retrive movements");
+        retriveMovements.addActionListener(e -> {
+
+
+        });
 
         panel.add(balanceLbl);
         panel.add(amountLbl);
