@@ -20,9 +20,6 @@ import java.util.logging.Logger;
  */
 public class Home extends JFrame {
 
-    private final int WIDTH = 1280;
-    private final int HEIGHT = WIDTH / 16 * 9;
-
     private final Logger LOGGER;
 
     private DatabaseConnection databaseConnection;
@@ -41,7 +38,10 @@ public class Home extends JFrame {
 
         initDatabase();
 
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        int width = 1280;
+        int height = width / 16 * 9;
+
+        setPreferredSize(new Dimension(width, height));
         setResizable(false);
 
         addWindowListener(new WindowAdapter() {
@@ -59,20 +59,6 @@ public class Home extends JFrame {
         pack();
 
         setLocationRelativeTo(null);
-    }
-
-    /**
-     * @return Window WIDTH
-     */
-    public int getWIDTH() {
-        return WIDTH;
-    }
-
-    /**
-     * @return Window HEIGHT
-     */
-    public int getHEIGHT() {
-        return HEIGHT;
     }
 
     /**

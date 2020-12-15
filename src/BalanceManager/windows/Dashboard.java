@@ -2,10 +2,12 @@ package BalanceManager.windows;
 
 import BalanceManager.component.CustomPanel;
 import BalanceManager.utils.DatabaseConnection;
+import BalanceManager.utils.models.Movement;
 import org.jdatepicker.JDatePicker;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -15,7 +17,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
+
+// TODO Center the buttons and repaint values after new input
 
 /**
  * @author Francesco Girardi
@@ -23,9 +29,6 @@ import java.util.logging.Logger;
  * @since 1.0.0
  */
 public class Dashboard extends JFrame {
-
-    private final int WIDTH = 1280;
-    private final int HEIGHT = WIDTH / 16 * 9;
 
     private final String USERNAME;
 
@@ -52,7 +55,10 @@ public class Dashboard extends JFrame {
 
         initDatabase();
 
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        int width = 1280;
+        int height = width / 16 * 9;
+
+        setPreferredSize(new Dimension(width, height));
         setResizable(false);
 
         addWindowListener(new WindowAdapter() {
@@ -70,20 +76,6 @@ public class Dashboard extends JFrame {
         pack();
 
         setLocationRelativeTo(null);
-    }
-
-    /**
-     * @return Window WIDTH
-     */
-    public int getWIDTH() {
-        return WIDTH;
-    }
-
-    /**
-     * @return Window HEIGHT
-     */
-    public int getHEIGHT() {
-        return HEIGHT;
     }
 
     /**
@@ -149,7 +141,6 @@ public class Dashboard extends JFrame {
         CONTAINER.add(getBalancePanel());
     }
 
-    // TODO Center the Labels, add Buttons for movements
     private JPanel getEarningsPanel() {
 
         try {
@@ -220,8 +211,8 @@ public class Dashboard extends JFrame {
                     int response = preparedStatement.executeUpdate();
 
                     JOptionPane.showMessageDialog(null,
-                            "Earnings added" + response, "Add Earnings",
-                            JOptionPane.INFORMATION_MESSAGE, null);
+                            "Earnings added successfully ( " + response + " )",
+                            "Add Earnings", JOptionPane.INFORMATION_MESSAGE, null);
 
                 } catch (SQLException | ParseException throwables) {
                     throwables.printStackTrace();
@@ -230,6 +221,12 @@ public class Dashboard extends JFrame {
             } else {
                 System.out.println("User canceled / closed the dialog, result = " + result);
             }
+
+            float newAmount = earningsAmount + Float.parseFloat(amount.getText());
+
+            amountLbl.setText("<html>" +
+                    "   <span style='font-size:20px'>" + newAmount + " €</span>" +
+                    "</html>");
 
         });
 
@@ -310,8 +307,8 @@ public class Dashboard extends JFrame {
                     int response = preparedStatement.executeUpdate();
 
                     JOptionPane.showMessageDialog(null,
-                            "Outoing added" + response, "Add Outgoings",
-                            JOptionPane.INFORMATION_MESSAGE, null);
+                            "Expense added successfully ( " + response + " )",
+                            "Add Outgoings", JOptionPane.INFORMATION_MESSAGE, null);
 
                 } catch (SQLException | ParseException throwables) {
                     throwables.printStackTrace();
@@ -353,11 +350,79 @@ public class Dashboard extends JFrame {
         JButton retriveMovements = new JButton("Retrive movements");
         retriveMovements.addActionListener(e -> {
 
+            Set<Movement> movements = new TreeSet<>();
+
+            try {
+
+                ResultSet earningsSet = databaseConnection.getStatement().executeQuery(
+                        "SELECT * FROM " + USERNAME + ".earnings;");
+
+                while (earningsSet.next()) {
+
+                    movements.add(new Movement(earningsSet.getInt("id"),
+                            earningsSet.getString("description"),
+                            earningsSet.getFloat("amount"),
+                            earningsSet.getDate("date")));
+                }
+
+                ResultSet outgoingsSet = databaseConnection.getStatement().executeQuery(
+                        "SELECT * FROM " + USERNAME + ".outgoings;");
+
+                while (outgoingsSet.next()) {
+
+                    movements.add(new Movement(outgoingsSet.getInt("id"),
+                            outgoingsSet.getString("description"),
+                            -outgoingsSet.getFloat("amount"),
+                            outgoingsSet.getDate("date")));
+                }
+
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+
+            String[] columnNames = {"id", "description", "amount", "date"};
+            Object[][] data = new Object[movements.size()][columnNames.length];
+
+            int cont = 0;
+
+            for (Movement movement : movements) {
+
+                data[cont][0] = movement.getId();
+                data[cont][1] = movement.getDescription();
+                data[cont][2] = movement.getAmount();
+                data[cont][3] = movement.getDate();
+
+                cont++;
+            }
+
+            JTable jTable = new JTable(data, columnNames);
+            jTable.getTableHeader().setReorderingAllowed(false);
+
+            DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+            centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+            jTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
+            jTable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
+            jTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+            jTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
+
+            JScrollPane scrollPane = new JScrollPane(jTable);
+
+            final JComponent[] inputs = new JComponent[]{
+                    scrollPane
+            };
+
+            int result = JOptionPane.showConfirmDialog(null, inputs,
+                    "Movements", JOptionPane.DEFAULT_OPTION);
+
+            if (result != JOptionPane.OK_OPTION)
+                System.out.println("User canceled / closed the dialog, result = " + result);
 
         });
 
         panel.add(balanceLbl);
         panel.add(amountLbl);
+        panel.add(retriveMovements);
 
         return panel;
     }
